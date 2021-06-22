@@ -318,6 +318,12 @@ bool ClProgram::getSymbolAddressSize(const void *name, hipDeviceptr_t *dptr,
 /********************************/
 
 void *SVMemoryRegion::allocate(size_t size) {
+  cl::vector<cl::Device> devices = this->Context.getInfo<CL_CONTEXT_DEVICES>();
+  size_t max_alloc_size = devices[0].getInfo<CL_DEVICE_MAX_MEM_ALLOC_SIZE>();
+  if (size > max_alloc_size) {
+    logError("clSVMAlloc of {} bytes exceeds max size of {}\n", size, max_alloc_size);
+    std::abort();
+  }
   void *Ptr = ::clSVMAlloc(Context(), CL_MEM_READ_WRITE, size, SVM_ALIGNMENT);
   if (Ptr) {
     logDebug("clSVMAlloc allocated: {} / {}\n", Ptr, size);
@@ -1260,6 +1266,9 @@ void ClDevice::setupProperties(int index) {
 
   Properties.maxThreadsPerBlock =
       Dev.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>(&err);
+
+  Properties.MaxAllocSize =
+    Dev.getInfo<CL_DEVICE_MAX_MEM_ALLOC_SIZE>(&err);
 
   std::vector<size_t> wi = Dev.getInfo<CL_DEVICE_MAX_WORK_ITEM_SIZES>();
 

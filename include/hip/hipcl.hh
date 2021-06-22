@@ -514,6 +514,7 @@ typedef struct hipDeviceProp_t {
   int canMapHostMemory; ///< Check whether HIP can map host memory
   int gcnArch;          ///< AMD GCN Arch Value. Eg: 803, 701
   int integrated;       ///< APU vs dGPU
+  size_t MaxAllocSize;                     ///< Maximum allocation size for a single
 } hipDeviceProp_t;
 
 typedef struct hipPointerAttribute_t {
