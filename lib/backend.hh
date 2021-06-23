@@ -197,15 +197,18 @@ struct hipStreamCallbackData {
   hipStreamCallback_t Callback;
 };
 
+class ClDevice;
+
 class SVMemoryRegion {
   // ContextMutex should be enough
 
   std::map<void *, size_t> SvmAllocations;
   std::map<void *, size_t> GlobalPointers;
+  ClDevice *Device;
   cl::Context Context;
 
 public:
-  void init(cl::Context &C) { Context = C; }
+  void init(cl::Context &C, ClDevice *D) { Context = C; Device = D;}
   SVMemoryRegion &operator=(SVMemoryRegion &&rhs) {
     SvmAllocations = std::move(rhs.SvmAllocations);
     GlobalPointers = std::move(rhs.SvmAllocations);
@@ -286,8 +289,6 @@ public:
   hipError_t launch(ClKernel *Kernel) { return Stream->launch(Kernel, this); }
 };
 
-
-class ClDevice;
 
 class ClContext {
   std::mutex ContextMutex;
@@ -373,7 +374,7 @@ class ClDevice {
   hipDeviceProp_t Properties;
   bool SupportsIntelDiag;
   std::map<hipDeviceAttribute_t, int> Attributes;
-  size_t TotalUsedMem, GlobalMemSize, MaxUsedMem;
+  size_t TotalUsedMem, GlobalMemSize, MaxUsedMem, MaxAllocSize;
 
   std::vector<std::string *> Modules;
   std::map<const void *, std::string *> HostPtrToModuleMap;
@@ -396,6 +397,7 @@ public:
   cl::Device &getDevice() { return Device; }
   hipDevice_t getHipDeviceT() const { return Index; }
   ClContext *getPrimaryCtx() const { return PrimaryContext; }
+  size_t getMaxAllocSize() const { return MaxAllocSize; }
 
   ClContext *newContext(unsigned int flags);
   bool addContext(ClContext *ctx);
